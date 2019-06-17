@@ -1,3 +1,6 @@
+# AUTHOR Paul S.I. Basondole
+# E-mail bassosimons@me.com
+
 import datetime
 import difflib
 import time
