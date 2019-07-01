@@ -16,22 +16,20 @@ class oltconnect():
 
 
    def __init__(self,username,password):
-
       self.session = paramiko.SSHClient()
       self.session.set_missing_host_key_policy(paramiko.AutoAddPolicy())
       self.username = username
       self.password = password
 
    def getconf(self,HOST):
-
       self.session.connect(HOST, username=self.username, password=self.password, timeout=10,allow_agent=False,look_for_keys=False)
       self.cli = self.session.invoke_shell()
-      time.sleep(1) 
 
+      time.sleep(1) 
       self.cli.send("scroll\n")
       self.cli.send("\n")
       time.sleep(1)
-
+      
       tmp = self.cli.recv(65535) # discard the output
       del tmp
 
@@ -61,16 +59,19 @@ class oltconnect():
       return result,userlog
 
 def getlasthourlog():
-
    cmd = 'display log all '
    cmd += (datetime.datetime.now()-datetime.timedelta(hours=1)).isoformat().replace('T',' ').split(':')[0]+':00:00 - '
    cmd += datetime.datetime.now().isoformat().replace('T',' ').split(':')[0]+':00:00'
+   #cmd += datetime.datetime.now().isoformat().replace('T',' ').split(':')[0]+':00:00 - '
+   #cmd += datetime.datetime.now().isoformat().split('T')[0]+' '+str(time.localtime()[3]+1).zfill(2)+':00:00'
 
    return cmd
 
 
 def modconfig(output):
    outputList = output.split("\r\n")
+   print(len(outputList))
+   #print(outputList)
    startmark =  '[global-config]'
    endmark = 'return'
 
@@ -79,14 +80,19 @@ def modconfig(output):
 
 def moduserlog(output):
    outputList = output.split("\r\n")
+   #print(len(outputList))
+   #print(outputList)
+   #startmark =  '  '
+   #for x in range(75): startmark+='-'
    startmark = outputList[1]
    endmark = outputList[-1]
+   #for line in outputList:
+      #if '>enable' in line: endmark = line
    
    return outputList,startmark,endmark 
 
 
 def filemake(HOST,outputList,startmark,endmark):
-
    stamp = datetime.datetime.now()
    stamp = str(stamp)
    stamp = stamp.replace(':','-')
@@ -97,35 +103,50 @@ def filemake(HOST,outputList,startmark,endmark):
          for line in range(outputList.index(startmark),outputList.index(endmark)):
             _.write(outputList[line]+'\n')
    except Exception: return False
-
+   
    return filename
 
 
-def previousfile(HOST):
+def previousfile(HOST,trial=False):
 
-   fl = subprocess.Popen("cd backups/ && /bin/ls "+HOST+"_*"+" -l | /usr/bin/awk '{print $9 }' | /usr/bin/sort -r | awk 'NR==1 {print}'",stdout=subprocess.PIPE,shell=True)        
+   if trial:
+      fl = subprocess.Popen("cd backups/ && /bin/ls "+HOST+"_*"+" -l | /usr/bin/awk '{print $9 }' | /usr/bin/sort -r | awk 'NR=="+str(trial)+" {print}'",stdout=subprocess.PIPE,shell=True)
+   else:
+      fl = subprocess.Popen("cd backups/ && /bin/ls "+HOST+"_*"+" -l | /usr/bin/awk '{print $9 }' | /usr/bin/sort -r | awk 'NR==1 {print}'",stdout=subprocess.PIPE,shell=True)
+
    for line in fl.stdout: previousfile = str(line.strip())
 
    return previousfile
 
 
-
 def mail(host,message):
-   user = 'user-email'
-   password = 'user-mail-password'
-   mailserver = 'user-mail-server'
-   portnumber = 'user-mail-server-port'
-   destination = 'mail-recepient'
+
+   user = 'mail_sender'
+   password = 'mail_password'
+   mailserver = 'mail_server'
+   portnumber = 'mail_port'
+   destination = ['mail_recipient1','mail_recipient2'] # add or remove recipient as needed
+   #destination = ';'.join(destination)
    barua = postman(user,password,mailserver,portnumber)
    barua.sendMail(destination,message,subject=host+" OLT config differ")
 
 
 
-def makedif(previousfile,currentfile):
+def makedif(prevfile,currentfile,HOST=False):
+   
    _d1 = {} #for previous config file
    _d2 = {} #for current config file
 
-   for line in open(previousfile).readlines():
+   _f = open(prevfile).readlines()
+   trial = 1
+   while not _f:
+      trial +=1
+      prevfile = './backups/'+previousfile(HOST,trial=trial)
+      _f = open(prevfile).readlines()
+
+      #return 'No records from previous backup'
+
+   for line in open(prevfile).readlines():
      line = line.strip('\n')
      if re.match(r'  <',line):
         section = line
@@ -135,7 +156,6 @@ def makedif(previousfile,currentfile):
         except KeyError: _d1[line] = []
         except NameError: _d1[line] = []
         except UnboundLocalError: _d1[line] = []
-
          
    for line in open(currentfile).readlines():
      line = line.strip('\n')
@@ -147,10 +167,8 @@ def makedif(previousfile,currentfile):
         except KeyError: _d2[line] = []
         except NameError: _d2[line] = []
         except UnboundLocalError: _d2[line] = []
-
          
    _d = list(set(list(_d1.keys()) + list(_d2.keys())))
-
 
    tofauti = ''
    for key in _d:
@@ -173,6 +191,7 @@ def makedif(previousfile,currentfile):
             if str(line[0]) in ('+','-'):
                tofauti+=' '+str(line).strip()+'\n\n'
    if not tofauti: tofauti+= '\n No record is available'
+   #print('TOFAUTI:\n'+tofauti)
 
    return tofauti
 
@@ -191,27 +210,29 @@ def fanyakazi(HOST,username,password,lock=None):
    userlog = ''
    for line in range(logList.index(startmark),logList.index(endmark)):
       userlog+=str(logList[line])+'\n'
-   
+
    text1 = './backups/'+previous
    text2 = './backups/'+current
 
-   tofauti = ''
-   tofauti+= 'Node: '+HOST+'\n\nUser logs:\n\n'
+   #print('PREVIOUS'+text1)
+   #print('CURRENT'+text2)
+   message = ''
+   message += 'Node: '+HOST+'\n\nUser logs:\n\n'
+   message += userlog+'\n\nConfiguration changes:\n\n'
 
-   tofauti += userlog+'\n\nConfiguration changes:\n'
+   tofauti = makedif(text1,text2,HOST=HOST)
 
-   tofauti += makedif(text1,text2)
-
-   for key,value in OLTs.items():
-       if value == HOST:
-          HOST = key
-          break
-
-   mail(HOST,tofauti)
-
+   if tofauti:
+      message += tofauti
+      for key,value in OLTs.items():
+         if value == HOST:
+            HOST = key
+            break
+      mail(HOST,tofauti)
 
 
 def multithread(OLTs,username,password):
+
    threads = []
 
    for HOST in OLTs.keys():
@@ -247,10 +268,7 @@ class postman():
 
 
 
-
-
 if __name__ == '__main__':
-
 
    OLTs = {
           'olt-1':'10.2.4.2',
