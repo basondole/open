@@ -1,5 +1,5 @@
 # netgrapher
-Auto generation of link state network topologies using SNMP
+Tool fo auto generation of link state network topologies using SNMP. The code will take a base IP address and SNMP community string then poll each adjacennt device to generate the network diagram
 
 
 # OID
