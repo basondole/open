@@ -1,9 +1,9 @@
 # netgrapher
-Tool for auto generation of link state network topologies using SNMP. The code will take a base IP address and SNMP community string then poll each adjacent device to generate the network diagram.
+Tool for auto generation of link state such as OSPF and IS-IS network topologies using SNMP. The code will take a base IP address and SNMP community string then poll each adjacent device for protocol specific OIDs to gather neighborship details that will be used to generate the network diagram.
 
 
 # OIDs
-Different vendor implement different MIB OIDs in their software below are generic and may not work with your equipment. Refer vendor OID library
+Different vendor implement different MIB OIDs in their software below are generic and may not work with your equipment. For more specifi OIDs for your environment refer your equipment vendor OID library
 
 ### OSPF
  OSPF RouterId
