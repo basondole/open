@@ -271,12 +271,9 @@ class postman():
 if __name__ == '__main__':
 
    OLTs = {
-          'olt-1':'10.2.4.2',
-          'olt-2':'10.17.4.218',
-          'olt-3':'10.10.5.74',
-          'olt-4':'10.13.4.58'
+          'olt-1':'10.0.0.1',
+          'olt-2':'10.0.0.2',
          }
-
 
    username = "sshuser"
    password = "sshpassword"
