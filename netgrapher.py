@@ -41,8 +41,6 @@ def snmp_get(ip):
     for item in hostname:
         for oid, host in item:
             _host = str(host)
-            if 'SNET-' in _host: _host=_host.lstrip('SNET').lstrip('-')
-            _host = _host.rstrip('simbanet.co.tz')
             print('%s = %s' % (oid, host))
 
     # check if the hostname is already querried, if it is return
