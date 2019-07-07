@@ -1,6 +1,13 @@
 # netgrapher
 Tool for auto generation of link state such as OSPF and IS-IS network topologies using SNMP. The code will take a base IP address and SNMP community string then poll each adjacent device for protocol specific OIDs to gather neighborship details that will be used to generate the network diagram.
 
+# Output presentation
+The created network of devices can be presented in different formats
+- Display link state devices on the screen
+- Export link state devices to CSV file
+- Generate a static network topology
+- Generate an interactive network topology
+- Export a GEFX file to use with Gephi (A graph visualization tool)
 
 # OIDs
 Different vendor implement different MIB OIDs in their software below are generic and may not work with your equipment. For more specifi OIDs for your environment refer your equipment vendor OID library
