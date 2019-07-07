@@ -1,3 +1,7 @@
+#Forked from Mihai Catalin Teodosiu work on "OSPF Network Discovery via SNMP"
+#Author: Paul S.I. Basondole
+#E-mail: bassosimons@me.com
+
 import pprint
 import subprocess
 import binascii
@@ -25,7 +29,7 @@ def snmp_get(ip):
     #Creating command generator object
     cmdGen = cmdgen.CommandGenerator()
     
-    #Performing SNMP GETNEXT operations on the OSPF OIDs
+    #Performing SNMP GETNEXT operations on the OIDs
     #The basic syntax of nextCmd: nextCmd(authData, transportTarget, *varNames)
     #The nextCmd method returns a tuple of (errorIndication, errorStatus, errorIndex, varBindTable)
 
@@ -271,10 +275,9 @@ def ip_to_name(final_devices_list):
 if __name__ == '__main__':
 
     #Prompting user for input
-    #ip = raw_input(Fore.BLUE + Style.BRIGHT + "\n* Please enter root device IP: ")
-    #comm = raw_input(Fore.BLUE + Style.BRIGHT + "\n* Please enter SNMP community: ")
-    #ip = '192.168.56.36'
-    #comm = 'fisi'
+    ip = raw_input(Fore.BLUE + Style.BRIGHT + "\n* Please enter root device IP: ")
+    comm = raw_input(Fore.BLUE + Style.BRIGHT + "\n* Please enter SNMP community: ")
+
 
     querried_neighbors = []
     querried_neighbors_names = []
