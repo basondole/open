@@ -1,6 +1,6 @@
 # This module is part of the core Basondole Tools
 # This code provides GUI for user to provison IP service and Martini layer 2 circuits
-# Can work with most shell with ssh support but it is further optimized for JunOS, Cisco IOS and IOS XE and Debian
+# Can work with most shell with ssh support but it is further optimized for JunOS, Cisco IOS and IOS XE
 # AUTHOR: Paul S.I. Basondole
 
 import Tkinter
