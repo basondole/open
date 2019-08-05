@@ -1,43 +1,77 @@
-#Forked from Mihai Catalin Teodosiu work on "OSPF Network Discovery via SNMP"
-#Author: Paul S.I. Basondole
-#E-mail: bassosimons@me.com
+'''
+Generate topology database for link  state protocol.
+The topology database can then be used to generate network diagram.
+Pre-requisites:
+	- Link type should be point-to-point links
+	- For juniper equipment JunOS 11.4R9 or later is required
+	
+NB: If pre-requisites are not met diagram data will still be useful but just not very accurate
+'''
 
 import pprint
 import subprocess
 import binascii
 import sys
-
 import matplotlib.pyplot as matp
 import networkx as nx
-
 from colorama import init, deinit, Fore, Style
 from pysnmp.entity.rfc3413.oneliner import cmdgen
 
-# Pre requisite
-# all link running IGP should be point-to-point links
-# for juniper equipment JunOS 11.4R9 or later is required
-# if the above arent met diagram data will still be useful just not very accurate
+
+__author__ = "Paul S.I. Basondole"
+__credits__ = "Mihai Catalin Teodosiu"
+__version__ = "1.0.1"
+__maintainer__ = "Paul S.I. Basondole"
+__email__ = "bassosimons@me.com"
 
 
-#SNMP function
-def snmp_get(ip):
-    print "\n---------BEGIN---------------"
+
+def snmp_get(ip,comm,protocol):
+    ''' Collect information from devices and return a dictionary of devices and their link state'''
+
+    global devices_list
     nbridlist = []
     nbriplist = []
     _devices = {}
     
+
+    hostname_oid = '1.3.6.1.2.1.1.5'
+    interface_oid = '1.3.6.1.2.1.31.1.1.1.1'
+    if protocol == 'ospf':
+        router_id_oid = ['1.3.6.1.2.1.14.1.1']
+        neighbor_router_id_oid = ['1.3.6.1.2.1.14.10.1.3']
+        neighbor_router_ip_oid = ['1.3.6.1.2.1.14.10.1.1']
+
+    if protocol == 'isis':
+        ''' to match possible oids from
+        juniper systemID, Cisco ciissysID and Juniper Ent systemID
+        '''
+        router_id_oid = ['1.3.6.1.2.1.138.1.1.1.3',
+                         '1.3.6.1.4.1.4874.2.2.38.1.1.1.1.4',
+                         '1.3.6.1.4.1.9.10.118.1.1.1.3']
+        neighbor_router_id_oid = ['1.3.6.1.2.1.138.1.6.1.1.6',
+                                  '1.3.6.1.4.1.9.10.118.1.6.1.1.6']
+
+        neighbor_router_ip_oid = ['1.3.6.1.2.1.138.1.6.3.1.3',
+                                  '1.3.6.1.4.1.9.10.118.1.6.3.1.3']
+        protocol_ifindex_oid = ['1.3.6.1.2.1.138.1.3.2.1.2',
+                                '1.3.6.1.4.1.9.10.118.1.3.2.1.2']
+
+
     #Creating command generator object
     cmdGen = cmdgen.CommandGenerator()
     
-    #Performing SNMP GETNEXT operations on the OIDs
-    #The basic syntax of nextCmd: nextCmd(authData, transportTarget, *varNames)
-    #The nextCmd method returns a tuple of (errorIndication, errorStatus, errorIndex, varBindTable)
-
+    '''
+    Performing SNMP GETNEXT operations on the OIDs
+    The basic syntax of nextCmd: nextCmd(authData, transportTarget, *varNames)
+    The nextCmd method returns a tuple of (errorIndication, errorStatus, errorIndex, varBindTable)
+    '''
+    
     hostname = False
     errIndication,errStatus,errIndex, hostname = cmdGen.nextCmd(cmdgen.CommunityData(comm),
-                                                                   cmdgen.UdpTransportTarget((ip, 161)),                                                                  
-                                                                    '1.3.6.1.2.1.1.5')
-    #print ip, hostname
+                                                                cmdgen.UdpTransportTarget((ip, 161)),                                                                  
+                                                                hostname_oid)
+    # print ip, hostname
     for item in hostname:
         for oid, host in item:
             _host = str(host)
@@ -46,38 +80,30 @@ def snmp_get(ip):
     # check if the hostname is already querried, if it is return
     for n in range(0, len(devices_list)):
         if devices_list[n]["Host"] == _host:
-            print(_host, "SKIPPED ALREADY POLLED")
+            #print(_host, "SKIPPED ALREADY POLLED")
             return
 
         
     interfaces = False
     errIndication,errStatus,errIndex, interfaces = cmdGen.nextCmd(cmdgen.CommunityData(comm),
-                                                                   cmdgen.UdpTransportTarget((ip, 161)),                                                                  
-                                                                    '1.3.6.1.2.1.31.1.1.1.1')
-    #print ip, interfaces
+                                                                  cmdgen.UdpTransportTarget((ip, 161)),                                                                  
+                                                                  interface_oid)
+
     all_interfaces = {}
     for item in interfaces:
         for oid, iface in item:
             all_interfaces[str(oid)]=str(iface)
             #print('%s = %s' % (oid, iface))
     #print(all_interfaces)
-    #sys.exit()
+
 
     hostId = False
-    errIndication,errStatus,errIndex, hostId = cmdGen.nextCmd(cmdgen.CommunityData(comm),
-                                                                     cmdgen.UdpTransportTarget((ip, 161)),
-                                                                     '1.3.6.1.2.1.138.1.1.1.3') #isis systemID Junos
-                                                                     #'1.3.6.1.2.1.14.1.1') #ospf RouterId
+    for oid in router_id_oid:
+        errIndication,errStatus,errIndex, hostId = cmdGen.nextCmd(cmdgen.CommunityData(comm),
+                                                                  cmdgen.UdpTransportTarget((ip, 161)),
+                                                                  oid)
+        if hostId: break
 
-    if not hostId:
-        errIndication,errStatus,errIndex, hostId = cmdGen.nextCmd(cmdgen.CommunityData(comm),
-                                                                         cmdgen.UdpTransportTarget((ip, 161)),
-                                                                     '1.3.6.1.4.1.4874.2.2.38.1.1.1.1.4')
-        
-    if not hostId: 
-        errIndication,errStatus,errIndex, hostId = cmdGen.nextCmd(cmdgen.CommunityData(comm),
-                                                                     cmdgen.UdpTransportTarget((ip, 161)),
-                                                                     '1.3.6.1.4.1.9.10.118.1.1.1.3')#isis sysID cisco ciiSysID from CISCO-IETF-ISIS-MIB
 
     #print ip, hostId
     for item in hostId:
@@ -87,20 +113,16 @@ def snmp_get(ip):
             ip_ = [int(i, 16) for i in octets]
             _host_id = '.'.join(str(i) for i in ip_)
             print('%s = %s' % (oid, hostid))
-    #sys.exit()
+
 
     varBindNbrTable = False
-    errIndication,errStatus,errIndex, varBindNbrTable = cmdGen.nextCmd(cmdgen.CommunityData(comm),
-                                                                       cmdgen.UdpTransportTarget((ip, 161)),
-                                                                       '1.3.6.1.2.1.138.1.6.1.1.6') #isis Neighbor sytemID Junos
-                                                                       #'1.3.6.1.2.1.14.10.1.3') #ospf Neighbor routerID
-
-    if not varBindNbrTable:
+    for oid in neighbor_router_id_oid:
         errIndication,errStatus,errIndex, varBindNbrTable = cmdGen.nextCmd(cmdgen.CommunityData(comm),
-                                                                       cmdgen.UdpTransportTarget((ip, 161)),
-                                                                       '1.3.6.1.4.1.9.10.118.1.6.1.1.6') #isis Neighbor sytemID Cisco
+                                                                           cmdgen.UdpTransportTarget((ip, 161)),
+                                                                           oid)
+        if varBindNbrTable: break
 
-    #print(varBindNbrTable)
+
     for varBindNbrTableRow in varBindNbrTable:
         for oid, nbrid in varBindNbrTableRow:
             hex_string = binascii.hexlify(str(nbrid))
@@ -114,19 +136,13 @@ def snmp_get(ip):
             nbridlist.append(nbr_r_id)
             #print('%s = %s' % (oid, nbr_r_id))
             
-    #sys.exit()
 
     varBindNbrIpTable = False
-    errorIndication, errorStatus, errorIndex, varBindNbrIpTable = cmdGen.nextCmd(cmdgen.CommunityData(comm),
-                                                                                 cmdgen.UdpTransportTarget((ip, 161)),
-                                                                                 '1.3.6.1.2.1.138.1.6.3.1.3') #isis Neighbor IPAddress Junos
-                                                                                 #'1.3.6.1.2.1.14.10.1.1') #ospf Neighbor IPAddress
-
-    if not varBindNbrIpTable:
+    for oid in neighbor_router_ip_oid:
         errorIndication, errorStatus, errorIndex, varBindNbrIpTable = cmdGen.nextCmd(cmdgen.CommunityData(comm),
-                                                                                 cmdgen.UdpTransportTarget((ip, 161)),
-                                                                                 '1.3.6.1.4.1.9.10.118.1.6.3.1.3') #isis Neighbor IPAddress Cisco
-
+                                                                                     cmdgen.UdpTransportTarget((ip, 161)),
+                                                                                     oid)
+        if varBindNbrIpTable: break
     
     #print(varBindNbrIpTable)
     for varBindNbrIpTableRow in varBindNbrIpTable:
@@ -135,49 +151,41 @@ def snmp_get(ip):
             octets = [hex_string[i:i+2] for i in range(0, len(hex_string), 2)]
             ip_ = [int(i, 16) for i in octets]
             nbr_ip = '.'.join(str(i) for i in ip_)
-            if len(nbr_ip)<=15: #only take valid IP addresses
+            if len(nbr_ip)<=15: # only take valid IP addresses
                 nbriplist.append(nbr_ip)
                 #print('%s = %s' % (oid, nbr_ip))
-    #sys.exit()
+
 
     varIfIndex = False
-    errIndication,errStatus,errIndex, varIfIndex = cmdGen.nextCmd(cmdgen.CommunityData(comm),
-                                                                     cmdgen.UdpTransportTarget((ip, 161)),
-                                                                     '1.3.6.1.2.1.138.1.3.2.1.2') #get ifindex for isis interfaces junos
+    for oid in protocol_ifindex_oid:
+        errIndication,errStatus,errIndex, varIfIndex = cmdGen.nextCmd(cmdgen.CommunityData(comm),
+                                                                      cmdgen.UdpTransportTarget((ip, 161)),
+                                                                      oid)
+        if varIfIndex: break
+
     if varIfIndex:
         ifnames = []
         for item in varIfIndex:
             for oid, ifindex in item:
                 #print('%s = %s' % (oid, ifindex))
-                if not 'lo0' in all_interfaces['1.3.6.1.2.1.31.1.1.1.1.'+str(ifindex)]:
-                    ifnames.append(all_interfaces['1.3.6.1.2.1.31.1.1.1.1.'+str(ifindex)])
-                    
-        if ifnames: # remove logical tunnel interfaces configured on the logical system side junos
+                if not 'lo0' in all_interfaces[interface_oid+'.'+str(ifindex)] or not 'Lo0' in all_interfaces[interface_oid+'.'+str(ifindex)]:
+                    ifnames.append(all_interfaces[interface_oid+'.'+str(ifindex)])
+
+       '''
+       remove logical tunnel interfaces configured on the logical system side for junos
+       this is to avoid polling the logical system if the adjacency is between logical and main system
+       '''
+        if ifnames:
             for x in range(len(ifnames)):
                 try:
                   if ifnames[x].split('.')[0] == ifnames[x+1].split('.')[0]:
                      if 'lt' in ifnames[x]: ifnames.pop(x+1)
                 except IndexError: pass
-                
-    if not varIfIndex:
-            errIndication,errStatus,errIndex, varIfIndex = cmdGen.nextCmd(cmdgen.CommunityData(comm),
-                                                                     cmdgen.UdpTransportTarget((ip, 161)),
-                                                                    '1.3.6.1.4.1.9.10.118.1.3.2.1.2') #get ifindex for isis interfaces cisco
-
-            ifnames = []
-            for item in varIfIndex:
-                for oid, ifindex in item:
-                    #print('%s = %s' % (oid, ifindex))
-                    if not 'Lo0' in all_interfaces['1.3.6.1.2.1.31.1.1.1.1.'+str(ifindex)]:
-                        ifnames.append(all_interfaces['1.3.6.1.2.1.31.1.1.1.1.'+str(ifindex)])
-
 
 
     querried_neighbors_names.append((_host,_host_id))
 
-    #sys.exit()
-    
-    #Adding OSPF data by device in the ospf_device dictionary
+    #Adding data of the polled device in the _device dictionary
     _devices["Host"] = _host
     _devices["HostId"] = _host_id
     _devices["NbrRtrId"] = nbridlist
@@ -191,11 +199,10 @@ def snmp_get(ip):
 
 
 
-	############# Application #5 - Part #3 #############
+def find_unqueried_neighbors(ip,comm,protocol):
+   ''' Uses the snmp_get function to querry found neighbors'''
 
-def find_unqueried_neighbors():
-
-    global querried_neighbors
+    global devices_list, querried_neighbors, querried_neighbors_names
     
     querried_neighbors = list(set(querried_neighbors))
     
@@ -205,9 +212,9 @@ def find_unqueried_neighbors():
     #print len(devices_list)
     for n in range(0, len(devices_list)):
         for each_nid in devices_list[n]["NbrRtrId"]:
-	    
+        
             if each_nid == "0.0.0.0": pass
-	    
+        
             else:
                 if each_nid not in querried_neighbors:
                     all_nbr_ids.append(each_nid)
@@ -215,8 +222,7 @@ def find_unqueried_neighbors():
     all_nbr_ids = list(set(all_nbr_ids))
     print("Neighbors of the host, these neighbors need to be polled")
     print(all_nbr_ids)
-    #sys.exit()
-    
+
     #Running the snmp_get() function for each unqueried neighbor
     print "lenght of devices_list",len(devices_list)
 
@@ -230,7 +236,7 @@ def find_unqueried_neighbors():
                     except IndexError: continue
                     print("    NEW_IP",new_ip)
                     try:
-                        snmp_get(new_ip)
+                        snmp_get(new_ip,comm,protocol)
                         querried_neighbors.append(s)
                         print("    ",q,r,s, "DONE")
                     except Exception as e:
@@ -241,8 +247,12 @@ def find_unqueried_neighbors():
 
     return all_nbr_ids, devices_list
 
-#Creating list of neighborships
+
+
 def neighborship(final_devices_list):
+    '''
+    Creating list of neighborships
+    '''
     neighborship_dict = {}
     for each_dictionary in final_devices_list:
         for index, each_neighbor in enumerate(each_dictionary["NbrRtrId"]):
@@ -250,14 +260,19 @@ def neighborship(final_devices_list):
             neighborship_dict[each_tuple] = each_dictionary["NbrRtrIp"][index]
     return neighborship_dict
 
-#function to map hostname and sysID by paul
+
+
 def id_to_name(final_devices_list):
+    ''' The SNMP poll will return router id. This function maps the id to hostnames
+    '''
     id_host = {}
     for item in final_devices_list: id_host[item['HostId']] = item['Host']
     return id_host
 
-#function to map link ipaddress and interface by paul
-def ip_to_name(final_devices_list):
+
+def ip_to_name(final_devices_list,neighborship_dict):
+    ''' Maps link IP address to the interface name
+    '''
     ip_iface = {}
     for item in final_devices_list:
         for index, each_neighbor in enumerate(item["NbrRtrId"]):
@@ -265,31 +280,24 @@ def ip_to_name(final_devices_list):
             ip_iface[each_tuple] = item['Interface'][index] + '\n'+ item["NbrRtrIp"][index]
             try: neighborship_dict[each_tuple]= item['Interface'][index] + '\n'+ neighborship_dict[each_tuple]
             except KeyError: pass
+	
     return neighborship_dict
 
 
 
 
-if __name__ == '__main__':
+def build(ip,comm,protocol):
+    ''' Collect devices data and build the neighbourship database
+    '''
+    global devices_list, querried_neighbors, querried_neighbors_names
 
-    #Prompting user for input
-    ip = raw_input(Fore.BLUE + Style.BRIGHT + "\n* Please enter root device IP: ")
-    comm = raw_input(Fore.BLUE + Style.BRIGHT + "\n* Please enter SNMP community: ")
-
-
-    querried_neighbors = []
-    querried_neighbors_names = []
-    devices_list = []
-
-    devices_list = snmp_get(ip)
+    devices_list = snmp_get(ip,comm,protocol)
     querried_neighbors.append(devices_list[0]["HostId"])
     pprint.pprint(devices_list)
-    #sys.exit()
 
     while True:
-        all_nbr_ids, devices_list = find_unqueried_neighbors()
+        all_nbr_ids, devices_list = find_unqueried_neighbors(ip,comm,protocol)
         if len(all_nbr_ids)==0: break
-
 
     final_devices_list = devices_list
     #pprint.pprint(final_devices_list)
@@ -297,9 +305,38 @@ if __name__ == '__main__':
     neighborship_dict = neighborship(final_devices_list)
     #pprint.pprint(neighborship_dict)
 
-    neighborship_dict = ip_to_name(final_devices_list)
+    neighborship_dict = ip_to_name(final_devices_list,neighborship_dict)
     #pprint.pprint(neighborship_dict)
 
+    return final_devices_list,neighborship_dict
+
+
+
+def get_input():
+    ''' Collect information from user
+    '''
+
+    ip = raw_input(Fore.BLUE + Style.BRIGHT + "\n* Enter device IP: ")
+    comm = raw_input(Fore.BLUE + Style.BRIGHT + "\n* Enter SNMP community: ")
+    protocol = raw_input(Fore.BLUE + Style.BRIGHT + "\n* Specify link protocol (isis or ospf): ").lower()
+
+    if protocol != 'ospf' and protocol != 'isis':
+        print('Wrong protocol choice')
+        sys.exit(1)
+
+    return ip,comm,protocol
+
+
+
+if __name__ == '__main__':
+
+    devices_list = []
+    querried_neighbors = []
+    querried_neighbors_names = []
+
+    ip,comm,protocol = get_input()
+
+    final_devices_list,neighborship_dict = build(ip,comm,protocol)
 
     #Initialize colorama
     init()
@@ -307,30 +344,30 @@ if __name__ == '__main__':
     while True:
         try:
             #User defined actions
-            print(Fore.BLUE + Style.BRIGHT + "* Please choose an action:\n\n1 - Display OSPF devices on the screen\n2 - Export OSPF devices to CSV file\n3 - Generate OSPF network topology\n4 - Generate interactive network topology\n5 - Generate GEFX file to use with Gephi\ne - Exit")
+            print(Fore.BLUE + Style.BRIGHT + "* Please choose an action:\n\n1 - Display devices on the screen\n2 - Export devices to CSV file\n3 - Generate network topology\n4 - Generate interactive network topology\n5 - Generate GEFX file to use with Gephi\ne - Exit")
             user_choice = raw_input("\n* Enter your choice: ")
             print("\n")
 
-            #Defining actions
+
             if user_choice == "1":
                 
                 for each_dict in final_devices_list:
                     print("Hostname: " + Fore.YELLOW + Style.BRIGHT + "%s" % each_dict["Host"] + Fore.BLUE + Style.BRIGHT)
-                    print("OSFP RID: " + Fore.YELLOW + Style.BRIGHT + "%s" % each_dict["HostId"] + Fore.BLUE + Style.BRIGHT)
-                    print("OSPF Neighbors by ID: " + Fore.YELLOW + Style.BRIGHT + "%s" % ', '.join(each_dict["NbrRtrId"]) + Fore.BLUE + Style.BRIGHT)
-                    print("OSPF Neighbors by IP: " + Fore.YELLOW + Style.BRIGHT + "%s" % ', '.join(each_dict["NbrRtrIp"]) + Fore.BLUE + Style.BRIGHT)
+                    print("RID: " + Fore.YELLOW + Style.BRIGHT + "%s" % each_dict["HostId"] + Fore.BLUE + Style.BRIGHT)
+                    print("Neighbors by ID: " + Fore.YELLOW + Style.BRIGHT + "%s" % ', '.join(each_dict["NbrRtrId"]) + Fore.BLUE + Style.BRIGHT)
+                    print("Neighbors by IP: " + Fore.YELLOW + Style.BRIGHT + "%s" % ', '.join(each_dict["NbrRtrIp"]) + Fore.BLUE + Style.BRIGHT)
                     print("\n")
                     
                 continue
             
             #Printing devices to CSV file
             elif user_choice == "2":
-                print(Fore.CYAN + Style.BRIGHT + "* Generating " + Fore.YELLOW + Style.BRIGHT + "OSPF_DEVICES" + Fore.CYAN + Style.BRIGHT + " file...\n")
+                print(Fore.CYAN + Style.BRIGHT + "* Generating " + Fore.YELLOW + Style.BRIGHT + "DEVICES" + Fore.CYAN + Style.BRIGHT + " file...\n")
                 print(Fore.CYAN + Style.BRIGHT + "* Check the script folder. Import the file into Excel for a better view of the devices.\n")
                 
-                csv_file = open("OSPF_DEVICES.txt", "w")
+                csv_file = open("DEVICES.txt", "w")
                 
-                print >>csv_file, "Hostname" + ";" + "OSPFRouterID" + ";" + "OSPFNeighborRouterID" + ";" + "OSPFNeighborIP"
+                print >>csv_file, "Hostname" + ";" + "RouterID" + ";" + "NeighborRouterID" + ";" + "NeighborIP"
                 
                 for each_dict in final_devices_list:
                     print >>csv_file, each_dict["Host"] + ";" + each_dict["HostId"] + ";" + ', '.join(each_dict["NbrRtrId"] + ";" + ', '.join(each_dict["NbrRtrIp"]))
@@ -347,13 +384,6 @@ if __name__ == '__main__':
                 G = nx.Graph()
                 G.add_edges_from(neighborship_dict.keys())
                 pos = nx.spring_layout(G, k = 0.5, iterations = 70)
-                #pos = nx.bipartite_layout(G,neighborship_dict.keys())
-                #pos = nx.circular_layout(G)
-                #pos = nx.shell_layout(G)
-                #pos = nx.random_layout(G)
-                #pos = nx.spectral_layout(G)
-                #pos = nx.kamada_kawai_layout(G)
-                #pos = nx.fruchterman_reingold_layout(G)
                 nx.draw_networkx_labels(G, pos,labels=id_to_name(final_devices_list), font_size = 9, font_family = "sans-serif", font_weight = "bold")
                 nx.draw_networkx_edges(G, pos, width = 4, alpha = 0.4, edge_color = 'black')
                 nx.draw_networkx_edge_labels(G, pos, neighborship_dict, label_pos = 0.3, font_size = 6)
@@ -372,15 +402,10 @@ if __name__ == '__main__':
                 edge_list = interactive_graph.edge_list
                 node_labels = id_to_name(final_devices_list)
                 
-                # add nodes that could not be querried by SNMP
+                # add blank labels for nodes that could not be querried by SNMP
                 for node in node_positions.keys():
                     if node not in node_labels.keys(): node_labels[node]=''
                 edge_labels = {key:neighborship_dict[key] for key in neighborship_dict.keys() if key in edge_list}
-
-                #print.pprint(node_positions)
-                #print(node_labels)
-                #print(node_positions.keys())
-                #print(edge_labels)
 
                 interactive_graph.draw_node_labels(node_labels, node_positions,node_label_font_size=9)
 
@@ -391,12 +416,14 @@ if __name__ == '__main__':
                 G = nx.Graph()
                 G.add_edges_from(neighborship_dict.keys())
                 
-                for edge in neighborship_dict.keys(): #loop through and add label for edges
+		#loop through and add label for edges
+                for edge in neighborship_dict.keys(): 
                   G.edges[edge]['label'] = neighborship_dict[edge]
 
                 nodes =id_to_name(final_devices_list)
-
-                for node in nodes.keys(): #loop through and add label attribute for nodes
+		
+		#loop through and add label attribute for nodes
+                for node in nodes.keys(): 
                   G.add_node(node)
                   G.node[node]['label'] = nodes[node]
 
