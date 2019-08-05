@@ -55,10 +55,10 @@ ISIS Neighbor IPAddress Cisco
 1.3.6.1.4.1.9.10.118.1.6.3.1.3
 ```
 
-# Usage
-Install python 2.7 from https://www.python.org/downloads/  
-Download the requirement file from above `requirement.txt`  
-Download the code `topmapper.py` 
+# Installation and usage
+- Install python 2.7 from https://www.python.org/downloads/  
+- Download the requirement file from above `requirement.txt`  
+- Download the code `topmapper.py` 
 
 
 Open command prompt (windows) or terminal (Mac and Linux)
