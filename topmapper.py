@@ -224,7 +224,7 @@ def find_unqueried_neighbors(ip,comm,protocol):
     print(all_nbr_ids)
 
     #Running the snmp_get() function for each unqueried neighbor
-    print "lenght of devices_list",len(devices_list)
+    print("lenght of devices_list",len(devices_list))
 
     for q in all_nbr_ids:
         for r in range(0, len(devices_list)):
@@ -334,17 +334,23 @@ if __name__ == '__main__':
     querried_neighbors = []
     querried_neighbors_names = []
 
+     #Initialize colorama
+    init()
     ip,comm,protocol = get_input()
 
     final_devices_list,neighborship_dict = build(ip,comm,protocol)
 
-    #Initialize colorama
-    init()
 
     while True:
         try:
-            #User defined actions
-            print(Fore.BLUE + Style.BRIGHT + "* Please choose an action:\n\n1 - Display devices on the screen\n2 - Export devices to CSV file\n3 - Generate network topology\n4 - Generate interactive network topology\n5 - Generate GEFX file to use with Gephi\ne - Exit")
+            # User actions
+            print(Fore.BLUE + Style.BRIGHT + "* Please choose an action:\
+                1 - Display devices on the screen\
+                2 - Export devices to CSV file\
+                3 - Generate network topology\
+                4 - Generate interactive network topology\
+                5 - Generate GEFX file to use with Gephi\
+                e - Exit")
             user_choice = raw_input("\n* Enter your choice: ")
             print("\n")
 
@@ -360,7 +366,7 @@ if __name__ == '__main__':
                     
                 continue
             
-            #Printing devices to CSV file
+            # Printing devices to CSV file
             elif user_choice == "2":
                 print(Fore.CYAN + Style.BRIGHT + "* Generating " + Fore.YELLOW + Style.BRIGHT + "DEVICES" + Fore.CYAN + Style.BRIGHT + " file...\n")
                 print(Fore.CYAN + Style.BRIGHT + "* Check the script folder. Import the file into Excel for a better view of the devices.\n")
@@ -416,13 +422,13 @@ if __name__ == '__main__':
                 G = nx.Graph()
                 G.add_edges_from(neighborship_dict.keys())
                 
-        #loop through and add label for edges
+                #loop through and add label for edges
                 for edge in neighborship_dict.keys(): 
                   G.edges[edge]['label'] = neighborship_dict[edge]
 
                 nodes =id_to_name(final_devices_list)
         
-        #loop through and add label attribute for nodes
+                #loop through and add label attribute for nodes
                 for node in nodes.keys(): 
                   G.add_node(node)
                   G.node[node]['label'] = nodes[node]
