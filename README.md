@@ -54,3 +54,10 @@ ISIS Neighbor IPAddress Cisco
 ```
 1.3.6.1.4.1.9.10.118.1.6.3.1.3
 ```
+
+# Usage
+Install python from https://www.python.org/downloads/
+Download the requirement file from above
+
+Open command prompt (windows) or terminal (Mac and Linux)
+pip install 
