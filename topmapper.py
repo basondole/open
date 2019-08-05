@@ -2,9 +2,9 @@
 Generate topology database for link  state protocol.
 The topology database can then be used to generate network diagram.
 Pre-requisites:
-	- Link type should be point-to-point links
-	- For juniper equipment JunOS 11.4R9 or later is required
-	
+    - Link type should be point-to-point links
+    - For juniper equipment JunOS 11.4R9 or later is required
+    
 NB: If pre-requisites are not met diagram data will still be useful but just not very accurate
 '''
 
@@ -171,10 +171,10 @@ def snmp_get(ip,comm,protocol):
                 if not 'lo0' in all_interfaces[interface_oid+'.'+str(ifindex)] or not 'Lo0' in all_interfaces[interface_oid+'.'+str(ifindex)]:
                     ifnames.append(all_interfaces[interface_oid+'.'+str(ifindex)])
 
-       '''
-       remove logical tunnel interfaces configured on the logical system side for junos
-       this is to avoid polling the logical system if the adjacency is between logical and main system
-       '''
+        '''
+        remove logical tunnel interfaces configured on the logical system side for junos
+        this is to avoid polling the logical system if the adjacency is between logical and main system
+        '''
         if ifnames:
             for x in range(len(ifnames)):
                 try:
@@ -200,7 +200,7 @@ def snmp_get(ip,comm,protocol):
 
 
 def find_unqueried_neighbors(ip,comm,protocol):
-   ''' Uses the snmp_get function to querry found neighbors'''
+    ''' Uses the snmp_get function to querry found neighbors'''
 
     global devices_list, querried_neighbors, querried_neighbors_names
     
@@ -280,7 +280,7 @@ def ip_to_name(final_devices_list,neighborship_dict):
             ip_iface[each_tuple] = item['Interface'][index] + '\n'+ item["NbrRtrIp"][index]
             try: neighborship_dict[each_tuple]= item['Interface'][index] + '\n'+ neighborship_dict[each_tuple]
             except KeyError: pass
-	
+    
     return neighborship_dict
 
 
@@ -416,13 +416,13 @@ if __name__ == '__main__':
                 G = nx.Graph()
                 G.add_edges_from(neighborship_dict.keys())
                 
-		#loop through and add label for edges
+        #loop through and add label for edges
                 for edge in neighborship_dict.keys(): 
                   G.edges[edge]['label'] = neighborship_dict[edge]
 
                 nodes =id_to_name(final_devices_list)
-		
-		#loop through and add label attribute for nodes
+        
+        #loop through and add label attribute for nodes
                 for node in nodes.keys(): 
                   G.add_node(node)
                   G.node[node]['label'] = nodes[node]
