@@ -58,8 +58,11 @@ ISIS Neighbor IPAddress Cisco
 # Usage
 Install python 2.7 from https://www.python.org/downloads/  
 Download the requirement file from above `requirement.txt`  
-Download the 
+Download the code `topmapper.py` 
 
 
 Open command prompt (windows) or terminal (Mac and Linux)
 `pip install -r requirement.txt`
+
+After succesfull installation of dependancies run the application
+`python topmapper.py`
