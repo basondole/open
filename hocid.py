@@ -1,5 +1,8 @@
-# AUTHOR Paul S.I. Basondole
-# E-mail bassosimons@me.com
+'''
+Takes backup of running config on Huawei OLT and do a diff between the current config and the latest backup.
+Pre-requisites:
+    - SSH is enabled on the OLT
+'''
 
 import datetime
 import difflib
@@ -10,10 +13,15 @@ import subprocess
 import smtplib
 import re
 
+__author__ = "Paul S.I. Basondole"
+__version__ = "1.0"
+__maintainer__ = "Paul S.I. Basondole"
+__email__ = "bassosimons@me.com"
 
 
 class oltconnect():
-
+   ''' Class that defines methods for conecting to OLT and getting config and log data for the past hour
+   '''
 
    def __init__(self,username,password):
       self.session = paramiko.SSHClient()
@@ -21,7 +29,11 @@ class oltconnect():
       self.username = username
       self.password = password
 
+      
    def getconf(self,HOST):
+      ''' Connect to device and get the current configuration
+      and log information
+      '''
       self.session.connect(HOST, username=self.username, password=self.password, timeout=10,allow_agent=False,look_for_keys=False)
       self.cli = self.session.invoke_shell()
 
@@ -30,7 +42,8 @@ class oltconnect():
       self.cli.send("\n")
       time.sleep(1)
       
-      tmp = self.cli.recv(65535) # discard the output
+      # discard th output
+      tmp = self.cli.recv(65535)
       del tmp
 
       self.cli.send(getlasthourlog()+"\n")
@@ -59,16 +72,20 @@ class oltconnect():
       return result,userlog
 
 def getlasthourlog():
+   ''' Generate CLI comand to get logs for the last hour
+   '''
+   
    cmd = 'display log all '
    cmd += (datetime.datetime.now()-datetime.timedelta(hours=1)).isoformat().replace('T',' ').split(':')[0]+':00:00 - '
    cmd += datetime.datetime.now().isoformat().replace('T',' ').split(':')[0]+':00:00'
-   #cmd += datetime.datetime.now().isoformat().replace('T',' ').split(':')[0]+':00:00 - '
-   #cmd += datetime.datetime.now().isoformat().split('T')[0]+' '+str(time.localtime()[3]+1).zfill(2)+':00:00'
 
    return cmd
 
 
 def modconfig(output):
+   '''Parse through the config and filter the intersting section
+   '''
+
    outputList = output.split("\r\n")
    print(len(outputList))
    #print(outputList)
@@ -79,11 +96,12 @@ def modconfig(output):
 
 
 def moduserlog(output):
+   '''Parse the user log
+   '''
    outputList = output.split("\r\n")
    #print(len(outputList))
    #print(outputList)
-   #startmark =  '  '
-   #for x in range(75): startmark+='-'
+
    startmark = outputList[1]
    endmark = outputList[-1]
    #for line in outputList:
@@ -93,6 +111,8 @@ def moduserlog(output):
 
 
 def filemake(HOST,outputList,startmark,endmark):
+   ''' Write the config data to a file on the system
+   '''
    stamp = datetime.datetime.now()
    stamp = str(stamp)
    stamp = stamp.replace(':','-')
@@ -108,7 +128,8 @@ def filemake(HOST,outputList,startmark,endmark):
 
 
 def previousfile(HOST,trial=False):
-
+   ''' Get the previous backup from the system
+   '''
    if trial:
       fl = subprocess.Popen("cd backups/ && /bin/ls "+HOST+"_*"+" -l | /usr/bin/awk '{print $9 }' | /usr/bin/sort -r | awk 'NR=="+str(trial)+" {print}'",stdout=subprocess.PIPE,shell=True)
    else:
@@ -120,12 +141,10 @@ def previousfile(HOST,trial=False):
 
 
 def mail(host,message):
-
-   user = 'mail_sender'
-   password = 'mail_password'
-   mailserver = 'mail_server'
-   portnumber = 'mail_port'
-   destination = ['mail_recipient1','mail_recipient2'] # add or remove recipient as needed
+   ''' Send mail containing diffs to the specified mails
+   '''
+   global user, password, mailserver, portnumber, destination
+   
    #destination = ';'.join(destination)
    barua = postman(user,password,mailserver,portnumber)
    barua.sendMail(destination,message,subject=host+" OLT config differ")
@@ -133,7 +152,8 @@ def mail(host,message):
 
 
 def makedif(prevfile,currentfile,HOST=False):
-   
+   ''' Create a diff of the config files
+   '''
    _d1 = {} #for previous config file
    _d2 = {} #for current config file
 
@@ -232,7 +252,8 @@ def fanyakazi(HOST,username,password,lock=None):
 
 
 def multithread(OLTs,username,password):
-
+   ''' Create separete thread for each OLT during code execution to run simultaneously on all devices
+   '''
    threads = []
 
    for HOST in OLTs.keys():
@@ -277,7 +298,12 @@ if __name__ == '__main__':
 
    username = "sshuser"
    password = "sshpassword"
-
+   user = 'mail_sender'
+   password = 'mail_password'
+   mailserver = 'mail_server'
+   portnumber = 'mail_port'
+   destination = ['mail_recipient1','mail_recipient2'] # add or remove recipient as needed
+   
    starttime = time.time()
 
    multithread(OLTs,username,password)
