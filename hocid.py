@@ -143,7 +143,7 @@ def previousfile(HOST,trial=False):
 def mail(host,message):
    ''' Send mail containing diffs to the specified mails
    '''
-   global user, password, mailserver, portnumber, destination
+   global mailuser, mailpass, mailserver, portnumber, destination
    
    #destination = ';'.join(destination)
    barua = postman(user,password,mailserver,portnumber)
@@ -291,18 +291,25 @@ class postman():
 
 if __name__ == '__main__':
 
-   OLTs = {
-          'olt-1':'10.0.0.1',
-          'olt-2':'10.0.0.2',
-         }
+    ''' Define parameters in this section
+   - Edit the OLTs names and IP address to reflect your environment
+   - Edit the username and password for OLT login for your network
+   - Edit mail parameters to reflet your environment
+   '''
+    
+    
+   OLTs = {'olt-1':'10.0.0.1',
+           'olt-2':'10.0.0.2',
+           'olt-3':'10.0.0.3',}
 
-   username = "sshuser"
-   password = "sshpassword"
-   user = 'mail_sender'
-   password = 'mail_password'
-   mailserver = 'mail_server'
-   portnumber = 'mail_port'
-   destination = ['mail_recipient1','mail_recipient2'] # add or remove recipient as needed
+   username = "paul"
+   password = "p@ul"
+
+   mailuser = "bassosimos@me.com"
+   mailpass = "p@ul0sMtp"
+   mailserver = "mail.me.com"
+   portnumber = "587"
+   destination = ['bassosimons@me.com','noc@me.com'] # add or remove recipient as needed
    
    starttime = time.time()
 
