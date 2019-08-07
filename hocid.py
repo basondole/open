@@ -316,7 +316,7 @@ if __name__ == '__main__':
    mailpass = "p@ul0sMtp"
    mailserver = "mail.me.com"
    portnumber = "587"
-   destination = ['bassosimons@me.com','noc@me.com'] # add or remove recipient as needed
+   destination = ['bassosimons@me.com','noc@me.com'] # add or remove recipient as needed here we are sending email to two recipients
    
    starttime = time.time()
 
