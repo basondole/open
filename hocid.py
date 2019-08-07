@@ -71,6 +71,34 @@ class oltconnect():
 
       return result,userlog
 
+
+class postman():
+
+    def __init__(self,user,password,mailserver,portnumber):
+        self.user = user
+        self.password = password
+        self.mailserver = mailserver
+        self.portnumber = portnumber
+
+        self.mail = smtplib.SMTP(self.mailserver,self.portnumber)
+        self.mail.ehlo()    #identify yourself to server
+        self.mail.starttls()    #encryption
+
+    def sendMail(self,destination,message,subject=None):
+       ''' Creates the mail body and headers then send to recepients
+       '''
+
+       if not subject: subject=message.split()[0]
+
+       BODY = 'From: {}\nTo: {}\nSubject: {}\n\n{}'.format(self.user,destination,subject,message)
+
+       self.mail.login(self.user,self.password)
+       self.mail.sendmail(self.user,destination,BODY)
+       self.mail.close()
+
+
+
+
 def getlasthourlog():
    ''' Generate CLI comand to get logs for the last hour
    '''
@@ -146,7 +174,7 @@ def mail(host,message):
    global mailuser, mailpass, mailserver, portnumber, destination
    
    #destination = ';'.join(destination)
-   barua = postman(user,password,mailserver,portnumber)
+   barua = postman(mailuser,mailpass,mailserver,portnumber)
    barua.sendMail(destination,message,subject=host+" OLT config differ")
 
 
@@ -216,7 +244,9 @@ def makedif(prevfile,currentfile,HOST=False):
    return tofauti
 
 
-def fanyakazi(HOST,username,password,lock=None):
+def kazi(HOST,username,password,lock=None):
+   ''' Operations to be executed on the remote device
+   '''
 
    previous = previousfile(HOST)
 
@@ -251,13 +281,14 @@ def fanyakazi(HOST,username,password,lock=None):
       mail(HOST,tofauti)
 
 
-def multithread(OLTs,username,password):
-   ''' Create separete thread for each OLT during code execution to run simultaneously on all devices
+def fanyakazi(OLTs,username,password):
+   ''' Creates separete thread for each OLT during code execution to run simultaneously on all devices
+   This improves the code run-time
    '''
    threads = []
 
    for HOST in OLTs.keys():
-         process = threading.Thread(target=fanyakazi, args=(OLTs[HOST],username,password))
+         process = threading.Thread(target=kazi, args=(OLTs[HOST],username,password))
          process.start()
          threads.append(process)
 
@@ -265,33 +296,9 @@ def multithread(OLTs,username,password):
 
 
 
-class postman():
-
-    def __init__(self,user,password,mailserver,portnumber):
-        self.user = user
-        self.password = password
-        self.mailserver = mailserver
-        self.portnumber = portnumber
-
-        self.mail = smtplib.SMTP(self.mailserver,self.portnumber)
-        self.mail.ehlo()    #identify yourself to server
-        self.mail.starttls()    #encryption
-
-    def sendMail(self,destination,message,subject=None):
-
-       if not subject: subject=message.split()[0]
-
-       BODY = 'From: {}\nTo: {}\nSubject: {}\n\n{}'.format(self.user,destination,subject,message)
-
-       self.mail.login(self.user,self.password)
-       self.mail.sendmail(self.user,destination,BODY)
-       self.mail.close()
-
-
-
 if __name__ == '__main__':
 
-    ''' Define parameters in this section
+   ''' Define parameters in this section
    - Edit the OLTs names and IP address to reflect your environment
    - Edit the username and password for OLT login for your network
    - Edit mail parameters to reflet your environment
@@ -313,6 +320,6 @@ if __name__ == '__main__':
    
    starttime = time.time()
 
-   multithread(OLTs,username,password)
+   fanyakazi(OLTs,username,password)
 
-   print('run-time '+str(time.time()-starttime))
+   print('Task completed: run-time '+str(time.time()-starttime))
