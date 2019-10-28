@@ -1,4 +1,4 @@
-# Topologymapper
+# Link State Map
 Tool for auto generation of link state such as OSPF and IS-IS network topologies using SNMP. The code will take a base IP address and SNMP community string then poll each adjacent device for protocol specific OIDs to gather neighborship details that will be used to generate the network diagram.
 
 # Output presentation
