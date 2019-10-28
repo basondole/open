@@ -1,0 +1,11 @@
+burst
+ bp-serv = 192.168.56.2
+ bp-user = basondole
+ bp-data = /home/basondole/PACOM/burstmanager/burstclients.db
+ondem
+ bd-serv = 192.168.56.2
+ bd-user = basondole
+ bd--pwd = /home/basondole/bOB
+general
+ devdata = C:/Users/u/Desktop/PACOM/
+ auth-se = 192.168.56.36
