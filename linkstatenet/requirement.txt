@@ -1,0 +1,4 @@
+colorama==0.4.1
+matplotlib==2.2.4
+networkx==2.2
+pysnmp==4.4.9
