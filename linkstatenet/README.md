@@ -58,7 +58,7 @@ ISIS Neighbor IPAddress Cisco
 # Installation and usage
 - Install python 2.7 from https://www.python.org/downloads/  
 - Download the file `requirement.txt` [link](requirement.txt) 
-- Download the code `topmapper.py` [link](topmapper.py)
+- Download the code `topmapper.py` [link](topologymap.py )
 
 
 Open command prompt (windows) or terminal (Mac and Linux)
