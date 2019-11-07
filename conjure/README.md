@@ -11,12 +11,12 @@ and their corresponing software.
 
 Database example:
 <pre>
-C:\Users\u>cat devices.txt
+C:\Users\basondole>cat devices.txt
 junos   192.168.56.36
 ios     192.168.56.26
 ios     192.168.56.63
 
-C:\Users\u>
+C:\Users\basondole>
 </pre>
 
 ## Usage
@@ -26,7 +26,7 @@ When the application runs successfully it will generate a directory `backup` in 
 where the configurations backup will be stored
 
 <pre>
-C:\Users\u>python conjure.py
+C:\Users\basondole>python conjure.py
 
 Config will be extracted from these boxes
 
@@ -93,9 +93,9 @@ Copyright℗: Paul S.I.Basondole
 
 
 
-C:\Users\u>
+C:\Users\basondole>
 
-C:\Users\u> ls backup
+C:\Users\basondole> ls backup
 192.168.56.36_big_2019-11-07T15-54.conf       192.168.56.63_router-1_2019-11-07T15-54.conf
 
 </pre>
