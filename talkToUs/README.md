@@ -1,6 +1,6 @@
 # talkToUs
 
-> As in network devices saying "talk to us"
+> As in devices saying "talk to us" 
 
 Talk to us allows a user to send commands to remote devices via SSH.
 User has a flexibility of sending a single command or multiple commands or better yet refer commands from a text file.
