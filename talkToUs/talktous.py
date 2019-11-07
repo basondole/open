@@ -158,7 +158,8 @@ def verifyUser(ipaddress,trial):
    try:
 
       try:
-         sshClient.connect(ipaddress, username=decrypt(ukey,username), password=decrypt(pkey,password), timeout=10,allow_agent=False,look_for_keys=False)
+         sshClient.connect(ipaddress, username=decrypt(ukey,username), password=decrypt(pkey,password),
+                           timeout=10,allow_agent=False,look_for_keys=False)
          authenticated = True
       except (socket.error, paramiko.AuthenticationException):
          authenticated = False
@@ -207,7 +208,8 @@ class job():
       try:
 
          try:
-            sshClient.connect(ipaddress, username=decrypt(ukey,username), password=decrypt(pkey,password), timeout=10,allow_agent=False,look_for_keys=False)
+            sshClient.connect(ipaddress, username=decrypt(ukey,username), password=decrypt(pkey,password), 
+                              timeout=10,allow_agent=False,look_for_keys=False)
             authenticated = True
          except (socket.error, paramiko.AuthenticationException):
             authenticated = False
