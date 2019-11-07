@@ -212,7 +212,8 @@ try:
                 authenticated = True
              except (socket.error, paramiko.AuthenticationException):
                 authenticated = False
-                with lock: print(time.ctime()+" (user = "+decrypt(ukey,username).decode()+") failed authentication > "+ipaddress.ljust(15))
+                with lock:
+                    print(time.ctime()+" (user = "+decrypt(ukey,username).decode()+") failed authentication > "+ipaddress.ljust(15))
 
 
              if authenticated==True:
