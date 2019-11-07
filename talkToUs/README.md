@@ -31,6 +31,28 @@ Developer: Paul S.I. Basondole
 C:\Users\u>
 </pre>
 
+### First time run
+User specifies username and password
+<pre>
+1516:05 pbasondole:baggy@box dist master …2 ./rw
+$ ./talktous -commands "show system alarms" -ipaddress "192.168.56.36"                         ↵ 127
+Username: paul
+Password:
+
+[192.168.56.36]
+
+
+   show system alarms
+   ------------------
+   No alarms currently active
+
+
+
+
+INFO: Developed by Paul S.I. Basondole
+1518:04 pbasondole:baggy@box dist master …3 ./rw
+</pre>
+
 ### Running a single command on one device
 
 Note on the output
