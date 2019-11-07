@@ -31,8 +31,8 @@ try:
        ''' Method to get device(s) ip addresses and command(s)
        This arguments can be literal strings or read from text files
        '''
-       
-       try: 
+
+       try:
           sys.argv.index("-version")
           print('talkToUs')
           print('Version: 2.0')
@@ -59,11 +59,12 @@ try:
              input('NB: Use cmd to launch this tool with above options')
              sys.exit()
 
-       try: ipaddress = sys.argv[sys.argv.index("-ipaddress")+1].strip()
+       try:
+          ipaddressFile = sys.argv[sys.argv.index("-ipaddressFile")+1]
        except (ValueError,IndexError):
           try:
-             ipaddressFile = sys.argv[sys.argv.index("-ipaddressFile")+1]
-          except (ValueError,IndexError):         
+             ipaddress = sys.argv[sys.argv.index("-ipaddress")+1].strip()
+          except (ValueError,IndexError):
              print('use [-ipaddress] to specify the host device or')
              print('use [-ipaddressFile] followed by file name')
              print('example: basowilldo -commands "show system users:show system uptime" -ipaddress 10.0.0.1')
@@ -80,19 +81,20 @@ try:
        for line in commands:
           commandList.append(line)
 
-       
-       if ':' in ipaddress: ipList = [ip for ip in ipaddress.split(':') if ip]
+
 
        else:
           ipList = []
-          try: ipList.append(ipaddress.strip())
+          try:
+             if ':' in ipaddress: ipList = [ip for ip in ipaddress.split(':') if ip]
+             else: ipList.append(ipaddress.strip())
+
           except UnboundLocalError:
              ipFile = open(ipaddressFile,'r')
              for line in ipFile:
                 for item in line.split('\n'):
-                   if len(item)==0: continue
+                   if not item.strip(): continue
                    ipList.append(item)
-
 
        return commandList,ipList
 
@@ -120,7 +122,7 @@ try:
           mkfile.close()
 
           return ukey,username,pkey,password
-          
+
        if trial: ukey,username,pkey,password = createLogin()
        else:
           try:
@@ -139,17 +141,17 @@ try:
                 except IndexError: ukey,username,pkey,password = createLogin()
 
           except IOError: ukey,username,pkey,password = createLogin()
-             
+
        try: ukey,username,pkey,password
        except UnboundLocalError: ukey,username,pkey,password = createLogin()
-          
+
        return ukey,username,pkey,password
 
 
 
     def verifyUser(ipaddress,trial):
        ''' Method to verify the vaidity of the issued credentials'''
-       
+
        global returnQ
        ukey,username,pkey,password = credentials(trial)
        sshClient = paramiko.SSHClient()
@@ -165,42 +167,39 @@ try:
              authenticated = False
              print(time.ctime()+" (user = "+decrypt(ukey,username).decode()+") failed authentication > "+ipaddress.ljust(15))
              returnQ.put(None)
-             
+
           if authenticated==True:
              sshClient.close()
              returnQ.put('Success')
           return ukey,username,pkey,password
-       
+
        except socket.error:
           print(time.ctime()+" (user = "+decrypt(ukey,username).decode()+") failed to connect > "+ipaddress.ljust(15))
           returnQ.put('Failed connection')
-       
-          
-       
+
     class job():
        ''' Core operation class
        '''
 
        def __init__(self,ukey,username,pkey,password):
           global returnQ
-          
+
           self.commandList,ipList = inputstuff()
 
           threads = []
           lock = threading.Lock()
-          
+
           for ipaddress in ipList:
              t = threading.Thread(target=self.kazi, args=(ukey,username,pkey,password,ipaddress,lock,returnQ))
              t.start()
              threads.append(t)
 
           for t in threads: t.join()
-        
 
        def kazi(self,ukey,username,pkey,password,ipaddress,lock,returnQ):
           ''' Method to establish ssh connection to device
           '''
-          
+
           commandList = self.commandList
           sshClient = paramiko.SSHClient()
           sshClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -208,7 +207,7 @@ try:
           try:
 
              try:
-                sshClient.connect(ipaddress, username=decrypt(ukey,username), password=decrypt(pkey,password), 
+                sshClient.connect(ipaddress, username=decrypt(ukey,username), password=decrypt(pkey,password),
                                   timeout=10,allow_agent=False,look_for_keys=False)
                 authenticated = True
              except (socket.error, paramiko.AuthenticationException):
@@ -216,7 +215,7 @@ try:
                 with lock: print(time.ctime()+" (user = "+decrypt(ukey,username).decode()+") failed authentication > "+ipaddress.ljust(15))
 
 
-             if authenticated==True: 
+             if authenticated==True:
 
                   console_output = ''
                   secureCli = sshClient.invoke_shell()
@@ -236,7 +235,7 @@ try:
                      secureCli.send(line)
                      secureCli.send('\n')
                      time.sleep(1)
-                  
+
                   try:
                      secureCli.close()
                   except socket.error: pass # session already Closed
@@ -245,7 +244,7 @@ try:
                      cli_output = secureCli.recv(65535).decode("utf-8")
                      if not cli_output: break
                      for line in cli_output:  console_output+=str(line)
-                  
+
                   sshClient.close()
 
                   output_lines = console_output.split('\n')
@@ -281,7 +280,6 @@ try:
              returnQ.put(None)
 
 
-          
 
     def encrypt(data):
 
@@ -302,7 +300,7 @@ try:
           print('INFO: Saved logins will now be destroyed')
           sys.exit('INFO: re-Run the command and enter credentials')
        return base64.b64decode(base64.b64decode(data.split(key)[0]).split(key)[0]).split(key)[0]
-     
+
 
     if __name__== "__main__":
 
@@ -313,15 +311,17 @@ try:
 
        ukey,username,pkey,password = verifyUser(ipList[0].strip(),None)
        verified = returnQ.get()
-       
+
        while verified==None:
           ukey,username,pkey,password =verifyUser(ipList[0].strip(),'try')
           verified = returnQ.get()
-          
+
        if verified: job(ukey,username,pkey,password)
 
 
        print('\nINFO: Developed by Paul S.I. Basondole')
-   
+
 except KeyboardInterrupt:
    pass
+except Exception as e:
+   print('Programm exited with error %s'%e)
