@@ -1,3 +1,7 @@
+'''
+Collect configuration from network devices that run Cisco IOS Cisco IOSXE or JunOS
+for backup purposes and invetory verification
+'''
 try:
 	import pprint
 	import getpass
