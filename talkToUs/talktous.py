@@ -1,5 +1,7 @@
-# !/usr/bin/python
-# Developed by Paul S.I. Basondole
+'''
+Send command(s) to network device(s) on the fly
+'''
+
 
 import paramiko
 import time
@@ -18,7 +20,18 @@ from Crypto.Hash import SHA256
 from Crypto import Random
 
 
+__author__ = "Paul S.I. Basondole"
+__credits__ = "Paul S.I. Basondole"
+__version__ = "2.0"
+__maintainer__ = "Paul S.I. Basondole"
+__email__ = "bassosimons@me.com"
+
+
 def inputstuff():
+   ''' Method to get device(s) ip addresses and command(s)
+   This arguments can be literal strings or read from text files
+   '''
+   
    try: 
       sys.argv.index("-version")
       print('talkToUs')
@@ -86,6 +99,9 @@ def inputstuff():
 
 
 def credentials(trial):
+   '''Method to get login credentials from user
+   Saves issued credential in an encrypted file
+   '''
 
    def createLogin():
       ukey,username,key = encrypt(input('Username: ').encode())
@@ -123,13 +139,17 @@ def credentials(trial):
             except IndexError: ukey,username,pkey,password = createLogin()
 
       except IOError: ukey,username,pkey,password = createLogin()
+         
    try: ukey,username,pkey,password
    except UnboundLocalError: ukey,username,pkey,password = createLogin()
+      
    return ukey,username,pkey,password
 
 
 
 def verifyUser(ipaddress,trial):
+   ''' Method to verify the vaidity of the issued credentials'''
+   
    global returnQ
    ukey,username,pkey,password = credentials(trial)
    sshClient = paramiko.SSHClient()
@@ -144,10 +164,12 @@ def verifyUser(ipaddress,trial):
          authenticated = False
          print(time.ctime()+" (user = "+decrypt(ukey,username).decode()+") failed authentication > "+ipaddress.ljust(15))
          returnQ.put(None)
+         
       if authenticated==True:
          sshClient.close()
          returnQ.put('Success')
       return ukey,username,pkey,password
+   
    except socket.error:
       print(time.ctime()+" (user = "+decrypt(ukey,username).decode()+") failed to connect > "+ipaddress.ljust(15))
       returnQ.put('Failed connection')
@@ -155,6 +177,8 @@ def verifyUser(ipaddress,trial):
       
    
 class job():
+   ''' Core operation class
+   '''
 
    def __init__(self,ukey,username,pkey,password):
       global returnQ
@@ -173,6 +197,9 @@ class job():
     
 
    def kazi(self,ukey,username,pkey,password,ipaddress,lock,returnQ):
+      ''' Method to establish ssh connection to device
+      '''
+      
       commandList = self.commandList
       sshClient = paramiko.SSHClient()
       sshClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -252,7 +279,6 @@ class job():
          returnQ.put(None)
 
 
-
       
 
 def encrypt(data):
@@ -283,12 +309,13 @@ if __name__== "__main__":
 
    if not commands or not ipList: sys.exit()
 
-
    ukey,username,pkey,password = verifyUser(ipList[0].strip(),None)
    verified = returnQ.get()
+   
    while verified==None:
       ukey,username,pkey,password =verifyUser(ipList[0].strip(),'try')
       verified = returnQ.get()
+      
    if verified: job(ukey,username,pkey,password)
 
    print('\nINFO: Developed by Paul S.I. Basondole')
