@@ -12,4 +12,4 @@ Network application for automating tasks in service provider
 Talktous allows a user to send arbitrary commands to remote devices via SSH.
 
 ## conjure
-Backup configuration and verify network invetory for Cisco IOS Cisco IOSXE or JunOS
+Backup configuration and verify network inventory for Cisco IOS Cisco IOSXE or JunOS
