@@ -8,14 +8,15 @@ These commands will can be run against a singel device whose ip address will be 
 similarly multiple ip addresses can used also with the flexibility of getting the ip addresses from a text file.
 
 # Supported platforms
-Linux  
-Cisco IOS  
-Cisco IOSXE  
-Cisco IOSXR  
-JunOS  
-Arista EOS  
-Mikrotik RouterOS  
-Hoppefully any device with a shell and SSH server :)
+- Linux  
+- Cisco IOS  
+- Cisco IOSXE  
+- Cisco IOSXR  
+- JunOS  
+- Arista EOS  
+- Mikrotik RouterOS  
+
+Hoppefully any device with a shell and SSH server :wink:
 
 
 # Usage
@@ -300,3 +301,107 @@ C:\Users\u>
 </pre>
 
 ### Getting commands and ip addresses from text files
+<pre>
+C:\Users\u>cat mycommands.txt
+show vrrp
+show interface lo0
+
+C:\Users\u>cat mydevices.txt
+192.168.56.36
+192.168.56.63
+
+C:\Users\u>talktous.py -commandsFile mycommands.txt -ipaddressFile mydevices.txt
+
+INFO: username and password auto-retrieved
+
+[192.168.56.63]
+
+
+   show vrrp
+   ---------
+
+   show interface lo0
+   ------------------
+   Loopback0 is up, line protocol is up
+     Hardware is Loopback
+     MTU 1514 bytes, BW 8000000 Kbit/sec, DLY 5000 usec,
+        reliability 255/255, txload 1/255, rxload 1/255
+     Encapsulation LOOPBACK, loopback not set
+     Keepalive set (10 sec)
+     Last input never, output never, output hang never
+     Last clearing of "show interface" counters never
+     Input queue: 0/75/0/0 (size/max/drops/flushes); Total output drops: 0
+     Queueing strategy: fifo
+     Output queue: 0/0 (size/max)
+     5 minute input rate 0 bits/sec, 0 packets/sec
+     5 minute output rate 0 bits/sec, 0 packets/sec
+        0 packets input, 0 bytes, 0 no buffer
+        Received 0 broadcasts (0 IP multicasts)
+        0 runts, 0 giants, 0 throttles
+        0 input errors, 0 CRC, 0 frame, 0 overrun, 0 ignored, 0 abort
+        0 packets output, 0 bytes, 0 underruns
+        0 output errors, 0 collisions, 0 interface resets
+        0 unknown protocol drops
+        0 output buffer failures, 0 output buffers swapped out
+
+
+
+[192.168.56.36]
+
+
+   show vrrp
+   ---------
+   warning: vrrp subsystem not running - not needed by configuration.
+
+
+   show interfaces lo0
+   -------------------
+   Physical interface: lo0, Enabled, Physical link is Up
+     Interface index: 6, SNMP ifIndex: 6
+     Type: Loopback, MTU: Unlimited
+     Device flags   : Present Running Loopback
+     Interface flags: SNMP-Traps
+     Link flags     : None
+     Last flapped   : Never
+       Input packets : 22
+       Output packets: 22
+
+     Logical interface lo0.0 (Index 99) (SNMP ifIndex 16)
+       Flags: SNMP-Traps Encapsulation: Unspecified
+       Input packets : 0
+       Output packets: 0
+       Protocol inet, MTU: Unlimited
+         Flags: Sendbcast-pkt-to-re
+       Protocol iso, MTU: Unlimited
+         Flags: None
+         Addresses, Flags: Is-Default Is-Primary
+           Local: 49.1921.6813.3600
+
+     Logical interface lo0.16384 (Index 98) (SNMP ifIndex 21)
+       Flags: SNMP-Traps Encapsulation: Unspecified
+       Input packets : 0
+       Output packets: 0
+       Protocol inet, MTU: Unlimited
+         Flags: None
+         Addresses
+           Local: 127.0.0.1
+
+     Logical interface lo0.16385 (Index 100) (SNMP ifIndex 22)
+       Flags: SNMP-Traps Encapsulation: Unspecified
+       Input packets : 22
+       Output packets: 22
+       Protocol inet, MTU: Unlimited
+         Flags: None
+         Addresses, Flags: Is-Default Is-Primary
+           Local: 128.0.0.4
+       Protocol inet6, MTU: Unlimited
+         Flags: None
+           Local: fe80::a00:270f:fcc6:60f8
+
+
+
+
+INFO: Developed by Paul S.I. Basondole
+
+C:\Users\u>
+</pre>
