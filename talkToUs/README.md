@@ -57,7 +57,7 @@ INFO: Developed by Paul S.I. Basondole
 
 Note on the output
 > INFO: username and password auto-retrieved  
-This is because my login credentials have already been saved (encypted) and the program just loads and decrypt the credentials without user having to re-enter the credential on each run
+This is because the login credentials have already been saved (encypted) and the program just loads and decrypt the credentials without user having to re-enter the credential on each run
 
 <pre>
 C:\Users\u>talktous -commands "show bgp summary" -ipaddress "192.168.56.36"
@@ -92,7 +92,7 @@ C:\Users\u>
 </pre>
 
 
-### Running a multiple commands on one device
+### Running multiple commands on one device
 <pre>
 C:\Users\u>talktous -commands "show version brief:show system alarms" -ipaddress "192.168.56.36"
 
